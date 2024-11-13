@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilik Perbentangan Availability Calendar</title>
+
+    <!-- FullCalendar CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
+
+    <style>
+        /* General page layout */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* Calendar container */
+        .calendar-container {
+            width: 70%; /* Adjust the width to control the size */
+            max-width: 1000px; /* Set a max width for larger screens */
+            height: 650px; /* Adjust the height */
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            background-color: #ffffff;
+            padding: 20px;
+        }
+
+       
+        /* Tooltip style */
+        .tooltip {
+            position: absolute;
+            background-color: #000;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="calendar-container">
+        <div id="calendar"></div>
+        <div class="tooltip" id="tooltip"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var tooltip = document.getElementById('tooltip');
+
+            // Initialize the calendar
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                height: '100%',
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    fetch('/RoomReservationApp/backend/get_calendarben.php')
+                        .then(response => response.json())
+                        .then(events => successCallback(events))
+                        .catch(error => failureCallback(error));
+                },
+                eventClassNames: 'fc-day',
+                dayCellDidMount: function (info) {
+                    const dayEvents = calendar.getEvents().filter(event =>
+                        new Date(event.start).toDateString() === info.date.toDateString()
+                    );
+
+                    if (dayEvents.length > 0) {
+                        info.el.classList.add('fc-event');
+                    }
+
+                    // Show tooltip on hover
+                    info.el.addEventListener('mouseenter', () => {
+                        const roomNames = dayEvents.map(e => e.title).join(', ');
+                        if (roomNames) {
+                            tooltip.innerHTML = `<strong>Booked Rooms:</strong> ${roomNames}`;
+                            tooltip.style.display = 'block';
+                            tooltip.style.left = `${info.el.getBoundingClientRect().left}px`;
+                            tooltip.style.top = `${info.el.getBoundingClientRect().top - 30}px`;
+                        }
+                    });
+
+                    info.el.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                }
+            });
+
+            // Render the calendar
+            calendar.render();
+        });
+    </script>
+</body>
+
+</html>
+
+
+
